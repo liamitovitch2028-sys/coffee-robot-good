@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Set Timer</title>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+            font-family: Arial, sans-serif;
+
+            background: #f5f5f5;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            min-height: 100vh;
+
+            margin: 0;
+
+            padding: 20px;
+        }
+
+
+        .container {
+            background: white;
+
+            width: 100%;
+
+            max-width: 400px;
+
+            padding: 35px 25px;
+
+            border-radius: 20px;
+
+            text-align: center;
+
+            box-shadow: 0px 5px 20px rgba(0,0,0,0.15);
+        }
+
+
+        h1 {
+            color: #4b2e1f;
+
+            margin-top: 0;
+
+            margin-bottom: 30px;
+
+            font-size: 28px;
+        }
+
+
+        .time-label {
+            font-size: 16px;
+
+            color: #555;
+
+            margin-bottom: 12px;
+
+            display: block;
+        }
+
+
+        .time-input {
+            width: 100%;
+
+            padding: 14px 10px;
+
+            font-size: 26px;
+
+            text-align: center;
+
+            border: 1px solid #ccc;
+
+            border-radius: 10px;
+
+            outline: none;
+
+            color: #333;
+        }
+
+
+        .time-input:focus {
+            border-color: #6f4e37;
+        }
+
+
+        button {
+            width: 100%;
+
+            padding: 14px;
+
+            border: none;
+
+            border-radius: 12px;
+
+            background: #6f4e37;
+
+            color: white;
+
+            font-size: 17px;
+
+            cursor: pointer;
+
+            margin-top: 15px;
+        }
+
+
+        button:hover {
+            background: #5a3d2b;
+        }
+
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+
+        .cancel-button {
+            background: #999;
+        }
+
+
+        .cancel-button:hover {
+            background: #777;
+        }
+
+
+        #countdown {
+            font-size: 42px;
+
+            font-weight: bold;
+
+            color: #4b2e1f;
+
+            margin: 20px 0;
+        }
+
+
+        #target-time {
+            font-size: 18px;
+
+            color: #555;
+
+            margin-top: 10px;
+        }
+
+
+        #status {
+            font-size: 16px;
+
+            margin-top: 15px;
+
+            color: #555;
+        }
+
+
+        .hidden {
+            display: none;
+        }
+
+
+        @media (max-width: 480px) {
+
+            .container {
+                padding: 30px 20px;
+            }
+
+
+            h1 {
+                font-size: 26px;
+            }
+
+
+            .time-input {
+                font-size: 24px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+    <h1>Set Coffee Timer</h1>
+
+
+    <!-- ================================ -->
+    <!-- TIMER SETUP -->
+    <!-- ================================ -->
+
+    <div id="setup">
+
+        <label
+            class="time-label"
+            for="alarmTime"
+        >
+            What time should your coffee be ready?
+        </label>
+
+
+        <input
+            class="time-input"
+            type="time"
+            id="alarmTime"
+        >
+
+
+        <button onclick="startTimer()">
+            Set Timer
+        </button>
+
+
+        <button
+            class="cancel-button"
+            onclick="goBack()"
+        >
+            Back
+        </button>
+
+    </div>
+
+
+    <!-- ================================ -->
+    <!-- TIMER RUNNING -->
+    <!-- ================================ -->
+
+    <div
+        id="running"
+        class="hidden"
+    >
+
+        <p>
+            Starting coffee at:
+        </p>
+
+
+        <div id="target-time">
+            00:00
+        </div>
+
+
+        <p>
+            Starting coffee in:
+        </p>
+
+
+        <div id="countdown">
+            00:00:00
+        </div>
+
+
+        <button
+            class="cancel-button"
+            onclick="cancelTimer()"
+        >
+            Cancel Timer
+        </button>
+
+
+        <!-- BACK BUTTON STAYS VISIBLE -->
+
+        <button
+            class="cancel-button"
+            onclick="goBack()"
+        >
+            Back
+        </button>
+
+    </div>
+
+
+    <p id="status"></p>
+
+</div>
+
+
+<script>
+
+
+let timerInterval = null;
+
+let endTime = null;
+
+
+// ==================================================
+// START TIMER
+// ==================================================
+
+function startTimer() {
+
+    const timeInput =
+        document.getElementById("alarmTime").value;
+
+
+    if (!timeInput) {
+
+        document.getElementById("status").innerHTML =
+            "Please choose a time.";
+
+        return;
+
+    }
+
+
+    const parts =
+        timeInput.split(":");
+
+
+    const hours =
+        parseInt(parts[0]);
+
+
+    const minutes =
+        parseInt(parts[1]);
+
+
+    // ----------------------------------------------
+    // Get current local time
+    // ----------------------------------------------
+
+    const now = new Date();
+
+
+    // ----------------------------------------------
+    // Create target time
+    // ----------------------------------------------
+
+    let target =
+        new Date();
+
+
+    target.setHours(hours);
+
+    target.setMinutes(minutes);
+
+    target.setSeconds(0);
+
+    target.setMilliseconds(0);
+
+
+    // ----------------------------------------------
+    // If that time already passed today,
+    // schedule it for tomorrow.
+    // ----------------------------------------------
+
+    if (target <= now) {
+
+        target.setDate(
+            target.getDate() + 1
+        );
+
+    }
+
+
+    // ----------------------------------------------
+    // Calculate time remaining
+    // ----------------------------------------------
+
+    const secondsUntil =
+        Math.floor(
+            (target.getTime() - now.getTime()) / 1000
+        );
+
+
+    if (secondsUntil <= 0) {
+
+        document.getElementById("status").innerHTML =
+            "Please choose a future time.";
+
+        return;
+
+    }
+
+
+    // ----------------------------------------------
+    // Save locally so the page can restore it
+    // ----------------------------------------------
+
+    endTime =
+        target.getTime();
+
+
+    localStorage.setItem(
+        "coffeeTimerEnd",
+        endTime
+    );
+
+
+    localStorage.setItem(
+        "coffeeTimerTarget",
+        timeInput
+    );
+
+
+    // ----------------------------------------------
+    // Send timer to backend
+    // ----------------------------------------------
+
+    const botID =
+        localStorage.getItem("botID");
+
+
+    if (!botID) {
+
+        document.getElementById("status").innerHTML =
+            "Please enter your Bot ID first.";
+
+        return;
+
+    }
+
+
+    fetch("/set_timer", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+
+            id: botID,
+
+            target_time: target.toISOString(),
+
+            seconds: secondsUntil
+
+        })
+
+    })
+    .then(response => {
+
+        if (!response.ok) {
+
+            throw new Error("Server error");
+
+        }
+
+        return response.text();
+
+    })
+    .then(data => {
+
+        console.log(
+            "Timer saved:",
+            data
+        );
+
+
+        // ------------------------------------------
+        // Switch to running screen
+        // ------------------------------------------
+
+        document.getElementById("setup")
+            .classList.add("hidden");
+
+
+        document.getElementById("running")
+            .classList.remove("hidden");
+
+
+        document.getElementById("target-time")
+            .innerHTML =
+            formatTargetTime(target);
+
+
+        document.getElementById("status")
+            .innerHTML =
+            "Timer set successfully.";
+
+
+        updateCountdown();
+
+
+        timerInterval =
+            setInterval(
+                updateCountdown,
+                250
+            );
+
+    })
+    .catch(error => {
+
+        console.error(error);
+
+
+        document.getElementById("status")
+            .innerHTML =
+            "Could not connect to the server.";
+
+    });
+
+}
+
+
+// ==================================================
+// UPDATE COUNTDOWN
+// ==================================================
+
+function updateCountdown() {
+
+    if (!endTime) {
+        return;
+    }
+
+
+    const remaining =
+        endTime - Date.now();
+
+
+    if (remaining <= 0) {
+
+        clearInterval(
+            timerInterval
+        );
+
+
+        timerInterval = null;
+
+
+        localStorage.removeItem(
+            "coffeeTimerEnd"
+        );
+
+
+        localStorage.removeItem(
+            "coffeeTimerTarget"
+        );
+
+
+        document.getElementById("countdown")
+            .innerHTML =
+            "00:00:00";
+
+
+        document.getElementById("status")
+            .innerHTML =
+            "Coffee timer finished.";
+
+
+        return;
+
+    }
+
+
+    const totalSeconds =
+        Math.ceil(
+            remaining / 1000
+        );
+
+
+    const hours =
+        Math.floor(
+            totalSeconds / 3600
+        );
+
+
+    const minutes =
+        Math.floor(
+            (totalSeconds % 3600) / 60
+        );
+
+
+    const seconds =
+        totalSeconds % 60;
+
+
+    document.getElementById("countdown")
+        .innerHTML =
+
+        String(hours).padStart(2, "0") +
+
+        ":" +
+
+        String(minutes).padStart(2, "0") +
+
+        ":" +
+
+        String(seconds).padStart(2, "0");
+
+}
+
+
+// ==================================================
+// FORMAT TARGET TIME
+// ==================================================
+
+function formatTargetTime(date) {
+
+    return date.toLocaleTimeString(
+        [],
+        {
+            hour: "numeric",
+            minute: "2-digit"
+        }
+    );
+
+}
+
+
+// ==================================================
+// CANCEL TIMER
+// ==================================================
+
+function cancelTimer() {
+
+    clearInterval(
+        timerInterval
+    );
+
+
+    timerInterval = null;
+
+
+    endTime = null;
+
+
+    localStorage.removeItem(
+        "coffeeTimerEnd"
+    );
+
+
+    localStorage.removeItem(
+        "coffeeTimerTarget"
+    );
+
+
+    const botID =
+        localStorage.getItem("botID");
+
+
+    // Tell backend to cancel the timer
+
+    if (botID) {
+
+        fetch("/cancel_timer", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+                id: botID
+
+            })
+
+        })
+        .catch(error => {
+
+            console.error(error);
+
+        });
+
+    }
+
+
+    document.getElementById("running")
+        .classList.add("hidden");
+
+
+    document.getElementById("setup")
+        .classList.remove("hidden");
+
+
+    document.getElementById("status")
+        .innerHTML =
+        "Timer cancelled.";
+
+}
+
+
+// ==================================================
+// BACK
+// ==================================================
+
+function goBack() {
+
+    window.location.href = "/";
+
+}
+
+
+// ==================================================
+// RESTORE TIMER
+// ==================================================
+
+window.onload = function() {
+
+    const savedEndTime =
+        parseInt(
+            localStorage.getItem("coffeeTimerEnd")
+        );
+
+
+    const savedTarget =
+        localStorage.getItem(
+            "coffeeTimerTarget"
+        );
+
+
+    if (
+        savedEndTime &&
+        savedEndTime > Date.now()
+    ) {
+
+        endTime =
+            savedEndTime;
+
+
+        document.getElementById("setup")
+            .classList.add("hidden");
+
+
+        document.getElementById("running")
+            .classList.remove("hidden");
+
+
+        if (savedTarget) {
+
+            const [hours, minutes] =
+                savedTarget
+                    .split(":")
+                    .map(Number);
+
+
+            let target =
+                new Date();
+
+
+            target.setHours(hours);
+
+            target.setMinutes(minutes);
+
+            target.setSeconds(0);
+
+            target.setMilliseconds(0);
+
+
+            if (target <= new Date()) {
+
+                target.setDate(
+                    target.getDate() + 1
+                );
+
+            }
+
+
+            document.getElementById("target-time")
+                .innerHTML =
+                formatTargetTime(target);
+
+        }
+
+
+        updateCountdown();
+
+
+        timerInterval =
+            setInterval(
+                updateCountdown,
+                250
+            );
+
+    }
+
+};
+
+
+</script>
+
+
+</body>
+
+</html>
