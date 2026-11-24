@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request
 import database as db
 
@@ -5,10 +6,6 @@ app = Flask(__name__)
 
 db.init()
 
-
-# ==================================================
-# WEBSITE
-# ==================================================
 
 @app.route("/")
 def home():
@@ -25,10 +22,6 @@ def timer():
     return render_template("timer.html")
 
 
-# ==================================================
-# SET TIMER
-# ==================================================
-
 @app.route("/set_timer", methods=["POST"])
 def set_timer():
 
@@ -38,37 +31,27 @@ def set_timer():
     target_time = data.get("target_time")
     seconds = data.get("seconds")
 
-    # Make sure everything was provided
     if not bot_id or seconds is None:
         print("ERROR: Missing ID or seconds")
         return "Missing ID or seconds", 400
 
-    # Make sure the ID exists
     if not db.check_id(bot_id):
         print("ERROR: ID does not exist")
         return "ID does not exist", 400
 
-    # Convert to integer
     try:
         seconds = int(seconds)
     except ValueError:
         print("ERROR: Invalid seconds")
         return "Invalid seconds", 400
 
-    # Don't allow negative timers
     if seconds <= 0:
         print("ERROR: Timer must be greater than 0")
         return "Timer must be greater than 0", 400
 
-    # SAVE TIMER TO DATABASE
     db.set_timer(bot_id, seconds)
 
     return "Timer saved"
-
-
-# ==================================================
-# CANCEL TIMER
-# ==================================================
 
 @app.route("/cancel_timer", methods=["POST"])
 def cancel_timer():
@@ -93,11 +76,6 @@ def cancel_timer():
 
     return "Timer cancelled"
 
-
-# ==================================================
-# ESP32 ONLINE
-# ==================================================
-
 @app.route("/online", methods=["POST"])
 def online():
 
@@ -107,18 +85,12 @@ def online():
 
     bot_id = data["id"]
 
-    # Add the device if it doesn't exist
     if not db.check_id(bot_id):
         db.add_device(bot_id)
 
     print(bot_id, "is online")
 
     return "ok"
-
-
-# ==================================================
-# MANUAL START
-# ==================================================
 
 @app.route("/start", methods=["POST"])
 def start():
@@ -133,20 +105,13 @@ def start():
     if not db.check_id(bot_id):
         return "ID does not exist", 400
 
-    # Cancel any timer
     db.clear_timer(bot_id)
 
-    # Tell ESP32 to immediately press
     db.set_command(bot_id, "press")
 
     print("START COFFEE:", bot_id)
 
     return "Coffee started"
-
-
-# ==================================================
-# ESP32 REQUESTS TIMER
-# ==================================================
 
 @app.route("/request")
 def request_timer():
@@ -159,7 +124,6 @@ def request_timer():
     if not db.check_id(bot_id):
         return "none"
 
-    # Check for commands FIRST
     command = db.get_command(bot_id)
 
     if command != "none":
@@ -170,7 +134,6 @@ def request_timer():
 
         return command
 
-    # Then check for timer
     seconds = db.get_timer(bot_id)
 
     if seconds > 0:
@@ -182,11 +145,6 @@ def request_timer():
         return str(seconds)
 
     return "none"
-
-
-# ==================================================
-# SAVE ID
-# ==================================================
 
 @app.route("/save_id", methods=["POST"])
 def save_id():
@@ -207,14 +165,10 @@ def save_id():
         "message": "This ID does not exist"
     }
 
-
-# ==================================================
-# START SERVER
-# ==================================================
-
-app.run(
-    host="0.0.0.0",
-    port=5000
-)
+if __name__ == "__main__":
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000))
+    )
 
 # 3FCD55319C3C

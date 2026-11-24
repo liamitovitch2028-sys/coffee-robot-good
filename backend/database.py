@@ -6,7 +6,7 @@ import psycopg2
 # DATABASE CONNECTION
 # ==================================================
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = "postgres://postgres:jmoE3IDR2J8CM9mzF4CMEThhLPtWEhYLEzLdmwgcHOb45nV3oQijO2zULWmpqPmT@gtvyt3z2scwjupafsh1xqz78:5432/postgres"
 
 
 def get_connection():
