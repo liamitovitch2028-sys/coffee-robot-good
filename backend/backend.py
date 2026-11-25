@@ -6,6 +6,9 @@ app = Flask(__name__)
 
 db.init()
 
+@app.route("/health")
+def health():
+    return {"status": "w vassap"}, 200
 
 @app.route("/")
 def home():
